@@ -1,5 +1,7 @@
 # Issued from the jenkins-base gitlab repository, you are not to follow it exactly if it does not fit your needs
 
+.env
+
 templates/jenkins
 
 # Auto generated scripts

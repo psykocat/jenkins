@@ -27,8 +27,8 @@ sed -i.prepareversionbackup -e '/VERSION/s/.*/VERSION='${docker_tag}'/' .env
 
 . .env
 composefile=docker-compose.yml
-registry=local
-image=${registry}/jenkins
+registry=${DOCKER_REGISTRY:-psykocat}
+image=${registry:+${registry}/}jenkins
 override_install_files=( "ref/jenkins.install.InstallUtil.lastExecVersion.override" "ref/jenkins.install.UpgradeWizard.state.override")
 VERSION="${VERSION:?"You must provide a jenkins version !"}"
 DOCKERFILE=${DOCKERFILE:?"You must provide a proper dockerfile name"}

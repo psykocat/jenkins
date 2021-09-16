@@ -1,4 +1,5 @@
-version: '2'
+---
+version: '3.8'
 services:
   jenkins:
     restart: always
@@ -11,8 +12,6 @@ services:
       HOME: ${JENKINS_HOME}
     expose:
       - "8080"
-    extra_hosts:
-      - "host.docker:172.17.0.1"
     logging:
       driver: "json-file"
       options:
@@ -21,18 +20,8 @@ services:
     dns:
       - 172.17.0.1
       - 8.8.8.8
-    labels:
-      #io.rancher.scheduler.affinity:host_label: 'jenkins=true'
-      #traefik.domain: ${site_url}
-      #traefik.port: '8080'
-      #traefik.enable: 'true'
-      ## Used to define what services are sidekicks (deployed into the same host needed to be able to use volumes_from)
-      #io.rancher.sidekicks: jenkins-data
-      SERVICE_8080_NAME: jenkins
-      SERVICE_50000_IGNORE: 'true'
     volumes:
-      - ${dockerconfig_root}/docker/ssl:/etc/docker
-      - ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
+      #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
       # If you use the docker in the host these variables shall not be tinkered with
       - ${JENKINS_HOME}:${JENKINS_HOME}
   jenkins-data:
@@ -41,6 +30,4 @@ services:
     network_mode: "none"
     volumes:
       - ${JENKINS_HOME}:${JENKINS_HOME}
-      - ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
-    #labels:
-    #  io.rancher.container.start_once: 'true'
+      #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
