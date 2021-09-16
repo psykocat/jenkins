@@ -2,7 +2,7 @@
 FROM jenkins/jenkins:2.312-alpine
 
 LABEL maintainer="Psyko Cat"
-LABEL org.label-schema.name="local/jenkins"
+LABEL org.label-schema.name="psykocat/jenkins"
 LABEL org.label-schema.description="Wrapper for Jenkins base with configuration done automatically"
 
 ARG pluginfile=plugins_versioned.txt
