@@ -1,0 +1,24 @@
+import jenkins.*
+import jenkins.model.*
+import com.cloudbees.plugins.credentials.domains.Domain
+import com.cloudbees.plugins.credentials.CredentialsScope
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl
+import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl
+
+def sonarUrl = System.getenv("_SONAR_URL_")
+def sonarPass = System.getenv("_SONAR_PASSWORD_")
+if (!sonarUrl == null || !sonarPass) {
+    return
+}
+global_domain = Domain.global()
+credentials_store = Jenkins.instance.getExtensionList('com.cloudbees.plugins.credentials.SystemCredentialsProvider')[0].getStore()
+
+dockerRegistryCredentials = new UsernamePasswordCredentialsImpl(
+	CredentialsScope.GLOBAL
+	, "sonarqube-credentials"
+	, "the sonarqube credentials"
+	, sonarUrl
+	, sonarPass)
+
+credentials_store.removeCredentials(global_domain, dockerRegistryCredentials)
+credentials_store.addCredentials(global_domain, dockerRegistryCredentials)

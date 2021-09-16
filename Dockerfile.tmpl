@@ -1,0 +1,24 @@
+# This file is needed/used if you need to custom your jenkins image base
+# Do not  hesitate to comment the plugins / init.groovy.d part if you do not need them.
+# If you do now customize your image, feel free to remove this file otherwise, please update your docker-compose.yml file with your new jenkins image
+FROM local/jenkins:2.278-alpine
+
+LABEL maintainer="Psyko Cat"
+LABEL org.label-schema.name="jenkins"
+LABEL org.label-schema.description="Wrapper for Jenkins base with configuration done automatically"
+
+ARG pluginfile=plugins.txt
+
+# Uncomment this part if you want to override configs
+#COPY init.groovy.d/* /usr/share/jenkins/ref/init.groovy.d/
+
+USER root
+
+# Uncomment this part if you want to add new plugins
+#COPY ${pluginfile} plugins.txt
+#RUN install-plugins.sh $(echo $(cat plugins.txt)) && for _file in /usr/share/jenkins/ref/plugins/*.jpi ; do mv ${_file} "${_file}.override" ; done
+
+# Add root configuration (package installation, ...)
+
+# Mandatory, Switch back at the end to the jenkins user
+USER jenkins

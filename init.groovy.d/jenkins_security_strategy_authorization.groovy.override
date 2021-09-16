@@ -1,0 +1,54 @@
+import jenkins.model.*
+import hudson.security.*
+import hudson.model.*
+
+envVal = System.getenv().get("_JENKINS_AUTH_METHOD_").trim().toLowerCase()
+if (envVal != "gitlab" && envVal != "local" ) {
+    return
+}
+
+matrix = System.getenv().get("_JENKINS_MATRIX_STRATEGY_", "unknown")
+def strategyMap = [
+    "global": "GlobalMatrixAuthorizationStrategy",
+    "project": "ProjectMatrixAuthorizationStrategy",
+    "loggedin": "FullControlOnceLoggedInAuthorizationStrategy"
+]
+if (!strategyMap.containsKey(matrix)) {
+    return
+}
+def instance = Jenkins.getInstance()
+def strategy = evaluate("new hudson.security."+strategyMap[matrix]+"()")
+if (matrix != "loggedin"){
+    def admins = System.getenv().get("_JENKINS_ADMIN_LIST_") ?: ""
+    admins = admins.tokenize(/,/)
+    def operators = System.getenv().get("_JENKINS_GLOBAL_LIST_") ?: ""
+    operators = operators.tokenize(/,/)
+    def readers = System.getenv().get("_JENKINS_READONLY_LIST_") ?: ""
+    readers = readers.tokenize(/,/)
+    admins.each{
+        if (it){
+            strategy.add(Jenkins.ADMINISTER, "${it}")
+        }
+    }
+    // add authenticated at overall read by default to allow partitionned users to see all accessible jobs
+    strategy.add(Jenkins.READ, "authenticated")
+    operators.each{
+        if (it){
+            strategy.add(Jenkins.READ, "${it}")
+            strategy.add(Item.BUILD, "${it}")
+            strategy.add(Item.DISCOVER, "${it}")
+            strategy.add(Item.EXTENDED_READ, "${it}")
+            strategy.add(Item.READ, "${it}")
+        }
+    }
+    readers.each{
+        if (it){
+            strategy.add(Jenkins.READ, "${it}")
+            strategy.add(Item.DISCOVER, "${it}")
+            strategy.add(Item.EXTENDED_READ, "${it}")
+            strategy.add(Item.READ, "${it}")
+        }
+    }
+}
+instance.setAuthorizationStrategy(strategy)
+instance.save()

@@ -1,0 +1,104 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.20">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.2.9"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.2.9">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>basedir</string>
+        <string>project</string>
+        <string>scriptName</string>
+        <string>revision</string>
+      </parameters>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>project</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>basedir</name>
+          <description></description>
+          <defaultValue>/projects</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>scriptName</name>
+          <description></description>
+          <defaultValue>Jenkinsfile</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>revision</name>
+          <description></description>
+          <defaultValue>develop</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.28">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.49">
+    <script>def credentialsMap = [
+    &quot;http&quot;: &quot;bitbucket-api-credentials&quot;,
+    &quot;ssh&quot;: &quot;jenkins-ssh-user-keys&quot;
+]
+def credsId = null
+def projdir = &quot;&quot;
+
+pipeline {
+    agent any
+    parameters {
+        string(name: &apos;project&apos;, defaultValue: &apos;&apos;, description: &apos;&apos;)
+        string(name: &apos;basedir&apos;, defaultValue: &apos;/projects&apos;, description: &apos;&apos;)
+        string(name: &apos;scriptName&apos;, defaultValue: &apos;Jenkinsfile&apos;, description: &apos;&apos;)
+        string(name: &apos;revision&apos;, defaultValue: &apos;develop&apos;, description: &apos;&apos;)
+    }
+    stages {
+        stage(&apos;Retrieve SCM and load library&apos;) {
+            steps {
+                script {
+                    if (!(params.project?.trim())){
+                        error(&quot;project shall not be empty&quot;)
+                    }
+                    projdir = params.basedir.trim() + &quot;/&quot; + params.project.trim()
+                    // Get adequat credentials according to repo protocol
+                    credsId = credentialsMap.find { k, v -&gt; if(projdir.startsWith(k)){return v}}?.value ?: &quot;&quot;
+
+                    jobDsl scriptText: &quot;&quot;&quot;pipelineJob(&quot;${params.project}&quot;) {
+                        definition {
+                            cpsScm {
+                                scm {
+                                    git {
+                                        branch(&quot;${params.revision}&quot;)
+                                            remote {
+                                                url(&quot;${projdir}&quot;)
+                                                credentials(&quot;${credsId}&quot;)
+                                            }
+                                    }
+                                }
+                                scriptPath(&quot;${params.scriptName}&quot;)
+                            }
+                        }
+                    }&quot;&quot;&quot;
+                }
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

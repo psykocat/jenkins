@@ -1,0 +1,67 @@
+import jenkins.model.*
+import hudson.security.*
+
+def authMethod = System.getenv("_JENKINS_AUTH_METHOD_") ?: ""
+authMethod = authMethod.trim().toLowerCase()
+if (authMethod != "local") {
+    return
+}
+
+def instance = Jenkins.getInstance()
+def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+
+def authDir = new File(System.getenv().get("JENKINS_HOME"), ".jenkins_accounts")
+authDir.mkdirs()
+
+def userList = []
+
+def createdUser = false
+
+def admins = System.getenv().get("_JENKINS_ADMIN_LIST_") ?: ""
+admins = admins.tokenize(/[, ]+/)
+def operators = System.getenv().get("_JENKINS_GLOBAL_LIST_") ?: ""
+operators = operators.tokenize(/[, ]+/)
+def readers = System.getenv().get("_JENKINS_READONLY_LIST_") ?: ""
+readers = readers.tokenize(/[, ]+/)
+def basicAccounts = System.getenv().get("_JENKINS_BASIC_ACCOUNTS_") ?: ""
+basicAccounts = basicAccounts.tokenize(/[, ]+/)
+
+// fuse the list
+userList = admins + operators + readers + basicAccounts
+
+// Remove specific keyword
+userList -= "authenticated"
+
+// Allocate a buffer for storing shell stdout and stderr
+def shellStdout = new StringBuilder(), shellStderr = new StringBuilder()
+userList.each{ user ->
+    def userFile = new File(authDir, user)
+    if(!userFile.exists()){
+        println("User ${user} is missing. Proceeding to its creation.")
+
+        // Empty the buffers
+        shellStdout.setLength(0)
+        shellStderr.setLength(0)
+
+        // Generate a password
+        def proc = 'openssl rand -base64 24'.execute()
+        proc.consumeProcessOutput(shellStdout, shellStderr)
+        proc.waitForOrKill(1000)
+        def stdOut = shellStdout.toString().trim()
+
+        // Update the account file
+        userFile.withWriter { it.println stdOut }
+
+        // Create the user
+        hudsonRealm.createAccount(user, stdOut)
+        createdUser = true
+        println("User ${user} created successfully !")
+    }
+}
+
+// Update the instance only if at least a user has really been created
+if(createdUser){
+    instance.setSecurityRealm(hudsonRealm)
+    println("User list updated successfully !")
+}
+instance.save()

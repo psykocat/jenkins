@@ -1,0 +1,42 @@
+def trimQuotesAndSpaces(string) {
+    def output = string.replaceFirst(/^["'\t ]*/, '')
+    output = output.replaceFirst(/["'\t ]*$/, '')
+    return output
+}
+def gitCommit = null
+def scmInfos = null
+def registry = null
+def imageName = "jenkins"
+pipeline{
+    agent any
+    stages {
+        stage('checkout code from SCM') {
+            steps {
+                script {
+                    scmInfos = checkout scm
+                    gitCommit = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                }
+            }
+        }
+        stage('build, tag and push jenkins image') {
+            steps {
+                script {
+                    registry = trimQuotesAndSpaces(env._DOCKER_REGISTRY_BASE_)
+                    docker.withTool('docker'){
+                        withDockerServer([credentialsId: 'docker-server-credentials', uri: 'tcp://host.docker:2376']) {
+                            docker.withRegistry("https://${registry}", 'docker-registry-credentials') {
+                                withEnv(readFile(".env").tokenize("\n").findAll{ ! it?.trim().startsWith("#") }) {
+                                    def jenkins = docker.image("${registry}/${imageName}")
+                                    sh """bash -ex ./tools/build.sh"""
+                                    jenkins.push(gitCommit)
+                                    jenkins.push("latest")
+                                    currentBuild.displayName = "#${env.BUILD_NUMBER} ${scmInfos.GIT_COMMIT}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

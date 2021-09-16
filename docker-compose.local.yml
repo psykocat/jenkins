@@ -1,0 +1,14 @@
+version: '2'
+services:
+  jenkins:
+    build:
+      context: ./
+      dockerfile: ${DOCKERFILE}
+      #args:
+      ## If you want to have systematically the latest versions of plugins when testing
+      #  pluginfile: "plugins.txt"
+    ports:
+      - "${local_published_port}:8080"
+    volumes:
+      # Like this we can generate custom jobs with local modifications, instead of having to push them systematically
+      - ${WORKSPACE}:/projects

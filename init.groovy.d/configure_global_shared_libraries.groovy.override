@@ -1,0 +1,47 @@
+import jenkins.*
+import jenkins.model.*
+import org.jenkinsci.plugins.workflow.libs.*
+import hudson.scm.SCM;
+import hudson.plugins.git.*;
+import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever;
+import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
+import jenkins.plugins.git.GitSCMSource;
+import groovy.json.JsonSlurperClassic
+
+
+def globalSharedLibsStr = System.getenv().get("_JENKINS_GLOBAL_SHARED_LIBRARY_JSON_");//new File(System.getenv().get("JENKINS_HOME") + "/global_shared_libraries.json")
+def scmBasePath = System.getenv().get("_SCM_BASE_PATH_");
+if (! globalSharedLibsStr){
+    println("INFO: No global shared library to configure.")
+    return
+}
+def globalSharedLibs = new JsonSlurperClassic().parseText("${globalSharedLibsStr.replaceAll("'", "")}")
+println(globalSharedLibs)
+
+def globalLibsDesc = Jenkins.getInstance().getDescriptor("org.jenkinsci.plugins.workflow.libs.GlobalLibraries")
+def gslArrays = []
+
+globalSharedLibs.each { gsl ->
+    println(gsl)
+    println(gsl.libName)
+    def scmRepo = gsl.scmRepo
+    if (!(scmRepo.startsWith("ssh") || scmRepo.startsWith("http") || scmRepo.startsWith("git:"))){
+        scmRepo = scmBasePath + "/" + scmRepo
+    }
+    println(scmRepo)
+    SCMSourceRetriever retriever = new SCMSourceRetriever(new GitSCMSource(
+            "${gsl.libName}",
+            "${scmRepo}",
+            "${gsl.scmCredentialsId}", //credentials ID
+            "*", // discovery branch, inclusion
+            "",  // discovery branch, exclusion
+            false)) // Don't ignore on push notifications
+
+    LibraryConfiguration pipeline = new LibraryConfiguration("${gsl.libName}", retriever)
+    pipeline.setDefaultVersion("${gsl.scmDefaultBranch}")
+    pipeline.setImplicit(gsl.implicitLoad ?: false)
+    gslArrays.add(pipeline)
+}
+
+println(globalLibsDesc.get().getLibraries())
+globalLibsDesc.get().setLibraries(gslArrays)

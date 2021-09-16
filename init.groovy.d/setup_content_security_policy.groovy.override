@@ -1,0 +1,16 @@
+import hudson.*
+import hudson.model.*
+import hudson.security.*
+import jenkins.*
+import jenkins.model.*
+
+
+def cspStr = System.getenv("_JENKINS_OVERRIDE_CSP_") ?: ""
+cspStr = cspStr.trim().toLowerCase()
+
+if (!cspStr) {
+    return
+}
+
+println("Overriding DirectoryBrowserSupport CSP of Hudson.")
+System.setProperty("hudson.model.DirectoryBrowserSupport.CSP", "${cspStr}")

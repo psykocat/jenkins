@@ -1,0 +1,59 @@
+# Issued from the jenkins-base gitlab repository, you are not to follow it exactly if it does not fit your needs
+
+templates/jenkins
+
+# Auto generated scripts
+stop_jenkins_compose_session.sh
+
+# custom envs launch
+*configured_start.sh
+
+# Backup and swap files
+*~
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+*.bak
+
+# Git merge original files
+*.orig
+
+# VSCode elements
+.vscode/
+.sass-cache/
+
+# ansible retry elements
+*.retry
+
+# log files
+logs
+*.log
+
+# security files
+*.crt
+*.key
+
+# Python objects
+*.py[coa]
+__pycache__
+
+# no hangup output file
+nohup.out
+
+# Vagrant
+.vagrant/
+
+### macOS ###
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+*.orig
+# auto-generated tag files
+tags

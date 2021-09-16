@@ -1,0 +1,23 @@
+import jenkins.model.*
+import hudson.security.*
+import hudson.model.*
+import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration
+import org.kohsuke.stapler.StaplerRequest
+
+def instance = Jenkins.getInstance()
+
+// current value
+println GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity
+
+// change vaue
+StaplerRequest stapler = null
+net.sf.json.JSONObject jsonObject = new net.sf.json.JSONObject()
+// Following the link, the json should not have a useScriptSecurity field to deactivate it...
+//jsonObject.put("useScriptSecurity", false)  // it uses has method https://github.com/jenkinsci/job-dsl-plugin/blob/6a70bba91e671ebe72fd682e92e9abea48a2b050/job-dsl-plugin/src/main/groovy/javaposse/jobdsl/plugin/GlobalJobDslSecurityConfiguration.groovy#L21
+GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).configure(stapler, jsonObject)
+
+// new value
+println GlobalConfiguration.all().get(GlobalJobDslSecurityConfiguration.class).useScriptSecurity
+
+instance.save()
+

@@ -1,0 +1,13 @@
+// Create a ~/.ssh/config file if one does not exists already to ensure that hostkeychecking is disabled
+def ssh_config = new File(System.getenv("HOME") + "/.ssh/config")
+if (ssh_config.exists()){
+    return
+}
+
+def contents = [ "Host *", "StrictHostKeyChecking no", "UserKnownHostsFile /dev/null" ]
+println("Updating ssh config default behaviour")
+ssh_config.withWriter { out ->
+    contents.each {
+        out.println it
+    }
+}

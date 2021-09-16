@@ -1,0 +1,90 @@
+import hudson.model.*
+import jenkins.model.*
+import javaposse.jobdsl.dsl.DslScriptLoader
+import javaposse.jobdsl.plugin.JenkinsJobManagement
+
+defaultGitDir = "/templates"
+def defaultJobName = "default"
+def jobName = System.getenv("_JOB_GENERATOR_NAME_") ?: defaultJobName
+def scmBase = System.getenv("_SCM_BASE_PATH_") ?: defaultGitDir
+def scmId = System.getenv("_JOB_GENERATOR_TYPE_") ?: "bitbucket"
+if (jobName == "") {
+    return
+}
+
+def generateJobDsl(jobName, scmBase, scmId, disabled) {
+    def dslFile = new File("${scmBase}/${jobName}/job_generation.groovy")
+    def dslContents = null
+    // We load as text only if it is the template, otherwise the dest is considered a git repository
+    if (dslFile.exists() && scmBase == defaultGitDir){
+        dslContents = """cps {
+    sandbox(true)
+    script('''${dslFile.text}''')
+} """
+    } else {
+        dslContents = """cpsScm {
+    scm {
+        git {
+            branch("develop")
+            remote {
+                url('${scmBase}/${jobName}')
+                if ("${scmBase}".startsWith("ssh")){
+                    credentials('ssh-jenkins-user-keys')
+                }
+                else {
+                    credentials('${scmId}-api-credentials')
+                }
+            }
+        }
+    }
+    scriptPath('job_generation.groovy') }"""
+    }
+
+    def workspace = new File('.')
+    def jobManagement = new JenkinsJobManagement(System.out, [:], workspace)
+
+    // Delete job to ensure that a clean creation is done
+    prevJobInstance = Jenkins.instance.getItemByFullName(jobName)
+    if (prevJobInstance) {
+        prevJobInstance.delete()
+    }
+    println("Generating ${jobName}")
+    new DslScriptLoader(jobManagement).runScript("""pipelineJob("${jobName}") {
+        properties {
+            rebuildSettings {
+                autoRebuild(false)
+                rebuildDisabled(false)
+            }
+        }
+        // Disable concurrent build
+        concurrentBuild(false)
+        // Manages how long to keep records of the builds.
+        logRotator {
+            // If specified, artifacts from builds older than this number of days will be deleted, but the logs, history, reports, etc for the build will be kept.
+            artifactDaysToKeep(7)
+            // If specified, only up to this number of builds have their artifacts retained.
+            artifactNumToKeep(5)
+            // If specified, build records are only kept up to this number of days.
+            daysToKeep(7)
+            // If specified, only up to this number of build records are kept.
+            numToKeep(10)
+        }
+        if (${disabled}) {
+            disabled(true)
+        }
+        definition {
+            ${dslContents}
+        }
+        triggers {
+            cron("H/5 * * * *")
+        }
+    }""")
+}
+
+// In this case, we want to ensure using the correct base path
+if (jobName == defaultJobName){
+    generateJobDsl("job-generator-bitbucket", scmBase, "bitbucket", true)
+    generateJobDsl("job-generator-gitlab", scmBase, "gitlab", true)
+} else {
+    generateJobDsl(jobName, scmBase, scmId, false)
+}

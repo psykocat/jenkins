@@ -1,0 +1,29 @@
+import jenkins.model.*
+import hudson.security.*
+import hudson.model.*
+
+def authMethod = System.getenv("_JENKINS_AUTH_METHOD_") ?: ""
+authMethod = authMethod.trim().toLowerCase()
+if (authMethod != "gitlab") {
+    return
+}
+
+def clientID = System.getenv("_OAUTH_CLIENT_ID_")
+def clientSecret = System.getenv("_OAUTH_CLIENT_SECRET_")
+def gitlabWebUri = System.getenv("_OAUTH_SERVER_URI_")
+if (!clientID || !clientSecret){
+    println("ERROR: Cannot setup gitlab security auth")
+    return
+}
+if (!gitlabWebUri){
+    println("ERROR: Cannot find gitlab uri to auth")
+    return
+}
+
+def instance = Jenkins.getInstance()
+
+def gitlabApiUri = gitlabWebUri
+
+def gitLabSecurityRealm = new org.jenkinsci.plugins.GitLabSecurityRealm(gitlabWebUri, gitlabApiUri, clientID, clientSecret)
+instance.setSecurityRealm(gitLabSecurityRealm)
+instance.save()

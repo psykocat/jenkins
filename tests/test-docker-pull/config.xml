@@ -1,0 +1,44 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.17">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.2.7"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.2.7">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.27">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.45">
+    <script>pipeline{
+    agent any
+    stages {
+        stage(&apos;Try retrieving latest jenkins image&apos;) {
+            steps {
+                script {
+                    docker.withTool(&apos;docker&apos;){
+                        withDockerServer([credentialsId: &apos;docker-server-credentials&apos;, uri: &apos;tcp://host.docker:2376&apos;]) {
+                            docker.withRegistry(&quot;https://${env._DOCKER_REGISTRY_BASE_}&quot;, &apos;docker-registry-credentials&apos;) {
+                                sh &apos;docker ps&apos;
+                                def jenkins = docker.image(&quot;${env._DOCKER_REGISTRY_BASE_}/jenkins&quot;)
+                                jenkins.pull()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

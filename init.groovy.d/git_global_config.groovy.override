@@ -1,0 +1,22 @@
+import jenkins.model.*
+
+def inst = Jenkins.getInstance()
+def desc = inst.getDescriptor("hudson.plugins.git.GitSCM")
+
+def projectName = System.getenv("_PROJECT_NAME_") ?: ""
+def jenkinsName = "Jenkins ${projectName}"
+def jenkinsMail = "jenkins@${projectName}"
+desc.setGlobalConfigName(jenkinsName)
+desc.setGlobalConfigEmail(jenkinsMail)
+desc.save()
+
+// Also writes the $HOME/.gitconfig
+def dest = System.getenv("HOME") + "/.gitconfig"
+def contents = ["[user]", "    name = ${jenkinsName}", "    email = ${jenkinsMail}"]
+
+println("Writing to ${dest}")
+new File(dest).withWriter { out ->
+    contents.each {
+        out.println it
+    }
+}

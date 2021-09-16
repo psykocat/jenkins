@@ -1,0 +1,32 @@
+import jenkins.*
+import jenkins.model.*
+import com.cloudbees.plugins.credentials.domains.Domain
+import com.cloudbees.plugins.credentials.CredentialsScope
+import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl
+import jenkins.plugins.slack.SlackNotifier
+
+def slackTokenId = "slack-token"
+def slackToken = System.getenv("_SLACK_TOKEN_ID_")
+def slackTeam = System.getenv("_SLACK_TEAM_DOMAIN_")
+
+if (!slackToken || !slackTeam) {
+    println("ERROR: Cannot configure Slack as environments informations are missing")
+    return
+}
+def instance = Jenkins.getInstance()
+global_domain = Domain.global()
+credentials_store = Jenkins.instance.getExtensionList('com.cloudbees.plugins.credentials.SystemCredentialsProvider')[0].getStore()
+
+
+credentials = new StringCredentialsImpl(
+  CredentialsScope.GLOBAL,
+  slackTokenId,
+  "The slack token for the team ${slackTeam}",
+  new hudson.util.Secret(slackToken))
+
+credentials_store.removeCredentials(global_domain, credentials)
+credentials_store.addCredentials(global_domain, credentials)
+
+// TODO Find a way to generate the config automatically (waiting for the api to be exposed ?)
+def slackContents = new SlackNotifier( "", slackTeam, "", false, "", slackTokenId,
+    "", false, false, false, false, false, false, false, false, false, false, false, null, false, "")

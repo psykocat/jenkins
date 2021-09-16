@@ -1,0 +1,19 @@
+import org.jenkinsci.plugins.docker.commons.tools.DockerTool;
+import hudson.tools.InstallSourceProperty;
+import hudson.tools.ToolProperty;
+import hudson.tools.ToolPropertyDescriptor;
+import hudson.util.DescribableList;
+
+def dockerDesc = jenkins.model.Jenkins.instance.getExtensionList(DockerTool.DescriptorImpl.class)[0]
+
+def installSourceProperty = new InstallSourceProperty()
+//def autoInstaller = new org.jenkinsci.plugins.docker.commons.tools.DockerToolInstaller("/usr/local/share", "latest")
+//installSourceProperty.installers.add(autoInstaller)
+
+def proplist = new DescribableList<ToolProperty<?>, ToolPropertyDescriptor>()
+//proplist.add(installSourceProperty)
+
+def installation = new DockerTool("docker", "", proplist)
+
+dockerDesc.setInstallations(installation)
+dockerDesc.save()
