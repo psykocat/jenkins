@@ -23,6 +23,10 @@ done
 if [ -z "${docker_tag}" ]; then
 	docker_tag=$(./tools/get_last_jenkins_docker_tag.sh ${docker_tag_opt})
 fi
+
+if [ ! -s ".env" ]; then
+	cp .env.tmpl .env
+fi
 sed -i.prepareversionbackup -e '/VERSION/s/.*/VERSION='${docker_tag}'/' .env
 
 . .env
@@ -42,5 +46,5 @@ for install_file in ${override_install_files[*]}; do
 	echo ${VERSION%-*} > "${install_file}"
 done
 rm -vf *.prepareversionbackup .*.prepareversionbackup
-git commit -m "Updating jenkins-base to version ${VERSION}" .env .env.tmpl "${DOCKERFILE}" "Dockerfile.tmpl" "${composefile}" ${override_install_files[@]}||true
+git commit -m "Updating jenkins-base to version ${VERSION}" .env.tmpl "${DOCKERFILE}" "Dockerfile.tmpl" "${composefile}" ${override_install_files[@]}||true
 # vim: noexpandtab:
