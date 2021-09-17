@@ -1,6 +1,17 @@
 // Create a ~/.ssh/config file if one does not exists already to ensure that hostkeychecking is disabled
-def ssh_config = new File(System.getenv("HOME") + "/.ssh/config")
+def ssh_dir = new File(System.getenv("HOME") + "/.ssh")
+def ssh_config = new File(ssh_dir.absolutePath + "/config")
+
+ssh_dir.mkdirs()
+
 if (ssh_config.exists()){
+    return
+}
+
+if (ssh_config.createNewFile()){
+    println("Created successfully ssh config file")
+}else{
+    println("[ERROR] Issue while creating ssh config file")
     return
 }
 
