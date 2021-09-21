@@ -7,10 +7,7 @@ LABEL org.label-schema.description="Wrapper for Jenkins base with configuration 
 
 ARG pluginfile=plugins_versioned.txt
 
-COPY download_and_install.sh /tmp/download_and_install.sh
 USER root
-
-RUN chmod a+x /tmp/download_and_install.sh
 RUN apk add --no-cache curl tar jq git shadow openssl \
     python3 \
     py3-pip \
@@ -29,9 +26,12 @@ RUN curl -sSLo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/s
     && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-bin-${glibc_version}.apk \
     && apk add glibc-bin-${glibc_version}.apk && rm glibc-bin-${glibc_version}.apk
 
+COPY download_and_install.sh /tmp/download_and_install.sh
+RUN chmod a+x /tmp/download_and_install.sh
+
 # Docker install (docker cli + docker-compose)
-ARG DOCKER_VERSION="19.03.5"
-ARG DOCKER_COMPOSE_VERSION="1.25.3"
+ARG DOCKER_VERSION="20.10.8"
+ARG DOCKER_COMPOSE_VERSION="1.29.2"
 RUN /tmp/download_and_install.sh docker https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz 1 \
     && curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
     && chmod 755 /usr/local/bin/docker-compose
