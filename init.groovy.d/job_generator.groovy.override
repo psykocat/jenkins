@@ -85,6 +85,8 @@ def generateJobDsl(jobName, scmBase, scmId, disabled) {
 if (jobName == defaultJobName){
     generateJobDsl("job-generator-bitbucket", scmBase, "bitbucket", true)
     generateJobDsl("job-generator-gitlab", scmBase, "gitlab", true)
+} else if (jobName == "disabled") {
+    return true
 } else {
     generateJobDsl(jobName, scmBase, scmId, false)
 }
