@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 
 docker_tag=
 docker_tag_opt="--tag"
 while [ $# -ne 0 ]; do
 	case $1 in
+		--debug)
+			set -x
+			;;
 		-h|--help) cat >/dev/stderr <<-EOF
 			Usage : $0 [version]
 			    version : Either fill the .env file before executing this script or give the full wanted version as a parameter
