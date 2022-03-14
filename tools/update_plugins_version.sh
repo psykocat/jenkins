@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 
-set -ex
+set -eu
+
+while [ $# -ne 0 ]; do
+	case $1 in
+		--debug)
+			set -x
+			;;
+		-h|--help) cat >/dev/stderr <<-EOF
+			Usage : $0
+
+			Update the list of plugins.txt with their associated versions
+			EOF
+			exit 0
+			;;
+		*);;
+	esac
+	shift
+done
 
 plugins_src=plugins.txt
 plugins_dest=plugins_versioned.txt
@@ -9,9 +26,11 @@ plugins_tmp=$(mktemp -p ${PWD} XXXXXXXXXX_plugins.txt)
 
 jenkins_version=$(sed -ne '2s/.*://p' Dockerfile)
 jenkins_version=${jenkins_version%-alpine*}
+
 if [ -z "${jenkins_version}" ]; then
 	jenkins_version=latest
 fi
+
 function cleanup(){
     # Cleaning temp file
     rm -v -- "${plugins_tmp}"
