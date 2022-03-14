@@ -6,8 +6,8 @@ Below will be detailled the prerequisites and steps to setup your Jenkins.
 
 For a lighter version of the process, a bash script is available :
 
-```
-curl -sSLO REPO_URL/get_jenkins.sh 
+```bash
+curl -sSLO REPO_URL/get_jenkins.sh
 bash ./get_jenkins.sh
 ```
 
@@ -15,7 +15,7 @@ And follow the instructions printed at the end by the script.
 
 If you want a fast available local jenkins without authentication process, use the two lines below:
 
-```
+```bash
 cd jenkins_project
 sed -i -e 's/\(_JENKINS_AUTH_METHOD_=\).*/\1disabled/' jenkins.config.env
 ./run.sh --local --automatic-preinstall
@@ -25,13 +25,14 @@ sed -i -e 's/\(_JENKINS_AUTH_METHOD_=\).*/\1disabled/' jenkins.config.env
 
 Use the jenkins template as a basis and store it in your project's SCM repository.
 By default, you have :
+
 * A `.env`
 * A `run.sh` script to run the docker images (Default options can be set in the beginning of the script, see the comments)
 * A `jenkins.config.env` (with LDAP token needed to be added)
 * A `Dockerfile` in case you need to customize the jenkins docker image (in this case don't forget to update your new image name in `docker-compose.yml`) with :
-    * New plugins (In this case, by default, you need to create a `plugins.txt` file)
-    * More packages
-    * More init.groovy.d scripts (or overriding the ones by default)
+  * New plugins (In this case, by default, you need to create a `plugins.txt` file)
+  * More packages
+  * More init.groovy.d scripts (or overriding the ones by default)
 * docker-compose files depending on your needs (as said above you can adapt them to your needs
 * A `Jenkinsfile.disabled` file that can be renamed in Jenkinsfile to build your custom jenkins image.
 
@@ -44,6 +45,7 @@ Like this if you ever need a simple update of version, just set it in the `.env`
 ### Prerequisites
 
 You need the following elements in order to use the jenkins on any server/your machine. These steps are currently valid for a Linux environment but may work for a Mac one too:
+
 * `jq` if you need to use `global_shared_libraries.json`
 * A docker daemon set up, to be properly operational you should listen to your Unix socket and on the secured port (tcp://`host.docker`:2376).
 * docker-compose installed via a specific version found on [The release page](https://github.com/docker/compose/releases) or the following command ```sudo pip install -U docker-compose```.
@@ -66,21 +68,21 @@ As you can see, you already have quite some files to play with. Some of them are
 ### Environment configs
 
 There are 2 importants configuration files to preset before executing your instance :
+
 1. The `.env` file will contains jenkins related workspace and version (normally the same as the one pulled previously, but can be incremented for further updates), take good care of your `dockerconfig_root` and `jenkins_home` variables as they are respectively the root path where will be stored all jenkins configs (env, ssh, ssl for docker certificates by default, among others you may add) and the jenkins home path where jenkins will store and persist everything during it's run process. A good commented example is to use the path `/usr/local/share/docker/configs/` for the root config.
 2. The `jenkins/jenkins.config.env` file which will contains all wanted environment for jenkins execution, with some internal ones already set and ready to be filled. It is *strongly* recommended to store this file outside the project jenkins' repository and update the variable in the `.env` file accordingly. Please take care of keeping the mandatory `jenkins` parent dir.
 
 ### Docker-compose details
 
 The docker-compose files have explicit names about when they need to be used but here's the description for each one:
+
 * `docker-compose.yml` : Basic Jenkins execution with all environments, volumes set. Will also serve as default include for every other docker-compose files. Can be standalone if a service discovery is available on your server as it exposes its port.
 * `docker-compose.local.yml` : Jenkins' local execution with 8080 port published and though accessible through `http://localhost:8080`
-* `docker-compose.nginx.yml` : Jenkins' connection to any nginx proxy (with eventually letsencrypt too) with proper variables set (check your .env for this). This use nginx own network.
-* `docker-compose.nginx_bridge.yml` : Jenkins' connection to any nginx proxy (with eventually letsencrypt too) with proper variables set (check your .env for this). This use docker global bridge network.
 
 ### Jenkins execution
 
 The best way to execute by default these files, is through `run.sh` execution.
-You can specify any docker combo to include with the adequat option like `./run.sh --local` or `./run.sh --nginx` or `./run.sh --nginx_bridge`.
+You can specify any docker combo to include with the adequat option like `./run.sh --local`.
 Remaining options passed to `./run.sh` are docker-compose commands, with the default one being `up -d --force-recreate`.
 
 When passing the -d option to daemonize the jenkins, as done by default, a `stop_jenkins_compose_session.sh` script will be generated to clean later on the session if needed.
@@ -89,6 +91,7 @@ When passing the -d option to daemonize the jenkins, as done by default, a `stop
 ## Jenkins maintenance
 
 As simple usage, when a new release is available, you can execute both scripts to update your base jenkins version :
+
 * `./tools/prepare_new_version.sh` will fetch the lattest tagged alpine version of official jenkins image and commit this infos (after updating scripts accordingly)
 * `./tools/update_plugins_version.sh` updates and commits the list of versionned plugins (fixated to their latest version as the moment of the launch
 
