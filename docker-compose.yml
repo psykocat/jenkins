@@ -2,7 +2,7 @@
 version: '3.8'
 services:
   jenkins:
-    restart: always
+    restart: unless-stopped
     image: ${DOCKER_REGISTRY}/jenkins:${VERSION}
     user: jenkins
     env_file:
@@ -10,8 +10,6 @@ services:
     environment:
       JENKINS_HOME: ${JENKINS_HOME}
       HOME: ${JENKINS_HOME}
-    expose:
-      - "8080"
     logging:
       driver: "json-file"
       options:
