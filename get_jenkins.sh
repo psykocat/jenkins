@@ -6,6 +6,7 @@ usage(){
 	cat > /dev/stderr <<-EOF
 	Usage: ${0}
 
+	Retrieve jenkins template from image as it is self-launchable
 EOF
 }
 fatal(){
@@ -16,10 +17,9 @@ cleanup(){
 	docker rm -v -f "${temp_img}" >/dev/null
 }
 trap cleanup EXIT ABRT
-IMAGE_VERSION=${IMAGE_VERSION:-latest}
-JENKINS_DIR=${JENKINS_DIR:-jenkins_project}
-registry=${DOCKER_REGISTRY}
-jenkins_image=${registry}/jenkins
+docker_tag=${IMAGE_VERSION:-latest}
+out_dir=${JENKINS_DIR:-jenkins_project}
+registry=${DOCKER_REGISTRY:-}
 temp_img=jenkins_template_retrieval
 args=()
 while [ $# -ne 0 ]; do
@@ -27,28 +27,46 @@ while [ $# -ne 0 ]; do
 		--debug) set -x;;
 		--)shift; break;;
 		-h|-help|--help) usage; exit 1;;
-		*) args+=("${1}");;
+		-r|--registry)
+			shift
+			registry=${1}
+			;;
+		-v|--version)
+			shift
+			docker_tag=${1}
+			;;
+		-o|--out-dir)
+			shift
+			out_dir=${1}
+			;;
+		*)
+			args+=("${1}")
+			;;
 	esac
 	shift;
 done
-echo "Logging to registry ${registry}"
-docker login ${registry}
+
+if [ -n "${registry}" ]; then
+	echo "Logging to registry ${registry}"
+	docker login ${registry}
+fi
+jenkins_image=${registry:+${registry}/}jenkins
 
 echo "Retrieving templated jenkins"
-docker run -d --name ${temp_img} ${jenkins_image}:${IMAGE_VERSION}
-docker cp ${temp_img}:/templates/jenkins "${JENKINS_DIR}"
+docker run -d --name ${temp_img} ${jenkins_image}:${docker_tag}
+docker cp ${temp_img}:/templates/jenkins "${out_dir}"
 
 echo "Setting up configuration"
-cd "${JENKINS_DIR}"
+cd "${out_dir}"
 # Keep original version name if latest is asked for easier future updates
-if [ "${IMAGE_VERSION}" != "latest" ]; then
-	sed -i.bak -e 's/^VERSION=.*/VERSION='${IMAGE_VERSION}'/' ./.env && rm -f ./.env.bak
+if [ "${docker_tag}" != "latest" ]; then
+	sed -i.bak -e 's/^VERSION=.*/VERSION='${docker_tag}'/' ./.env && rm -f ./.env.bak
 fi
 . ./.env
 cat > /dev/stdout <<-EOF
 Now you can create your jenkins container following these steps :
 
-* cd ${JENKINS_DIR}
+* cd ${out_dir}
 * ./run.sh --help (to get a list of possible choices for the --MODE option)
 * ./run.sh --MODE by replacing mode with the wanted one
 
