@@ -10,14 +10,20 @@ services:
     environment:
       JENKINS_HOME: ${JENKINS_HOME}
       HOME: ${JENKINS_HOME}
+    deploy:
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     logging:
       driver: "json-file"
       options:
         max-size: "100m"
         max-file: "5"
-    dns:
-      - 172.17.0.1
-      - 8.8.8.8
     volumes:
       #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
       # If you use the docker in the host these variables shall not be tinkered with
