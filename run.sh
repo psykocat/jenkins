@@ -12,17 +12,12 @@ fi
 
 script_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 args=()
-cmd="up"
+cmd=""
 clean_home=""
-run_prehook=
+run_prehook=""
+run_method="compose"
 no_pull=""
 filelist=("docker-compose.yml")
-modes_array=()
-for dcmode in ${script_dir}/docker-compose.*.yml; do
-	dcmode="${dcmode%.yml}"
-	dcmode="${dcmode#*docker-compose.}"
-	modes_array+=("--${dcmode}")
-done
 
 # Not really needed for jenkins images purpose as we match the jenkins source image version
 image_tag=latest
@@ -57,9 +52,28 @@ function usage(){
 	    --automatic-preinstall: Update jenkins.config.env and install ssh keys before running/updating jenkins container
 
 	    --MODE: use additional docker-compose file.
-	            Possible options are : $(echo "${modes_array[*]}"|sed -e 's/ / , /g') . (spaces are voluntarily set to ease copy)
+	            Possible options are : compose, swarm.
 
 	EOF
+}
+
+function __concat_file_names(){
+	local output_array= _f=""
+	case ${1} in
+		swarm)
+			for _f in ${filelist[@]}; do
+				output_array+=("-c" "${_f}")
+			done
+			;;
+		compose)
+			for _f in ${filelist[@]}; do
+				output_array+=("-f" "${_f}")
+			done
+			;;
+		*)
+			;;
+	esac
+	echo "${output_array[*]}"
 }
 
 function __run_pre_hook(){
@@ -84,7 +98,7 @@ function __run_pre_hook(){
 
 	### SSH keys copy
 	if [ -d "${script_dir}/ssh_keys" ]; then
-		ssh_keys_path=$(${dc_cmd} config|sed -e '/\.ssh/!d;s/:.*//;s/.* //')
+		ssh_keys_path=$(docker-compose $(__concat_file_names compose) config|sed -e '/\.ssh/!d;s/:.*//;s/.* //')
 		# Copy ssh keys to appropriate directory and chown them to be usable by jenkins
 		sh -c "mkdir -p ${ssh_keys_path}; cp ${script_dir}/ssh_keys/* ${ssh_keys_path}/; chown 1000:1000 -R ${ssh_keys_path}; chmod 644 ${ssh_keys_path}/*"
 	fi
@@ -103,13 +117,36 @@ function __run_pre_hook(){
 		fi
 		)
 	fi
-	if [ -z "${site_url}" ] && echo "${filelist[*]}"|grep -qe 'nginx'; then
-		tput setaf 3
-		echo "WARNING : site_url variable is empty in your .env file"
-		tput sgr0
+}
+function __run_docker_swarm(){
+	# Set default arguments
+	if [ -z "${cmd}" ]; then
+		cmd="deploy"
+		args+=( "--prune" "--with-registry-auth" "${COMPOSE_PROJECT_NAME}")
 	fi
+	echo "args : ${args[@]}"
+	echo "shell args : ${@}"
+	if [ "${cmd}" = "deploy" ]; then
+		# Create script to down session
+		cat > "${stop_script}" <<-EOF
+		#!/usr/bin/env bash
+		docker stack rm ${COMPOSE_PROJECT_NAME}
+		rm -f \${BASH_SOURCE[0]}
+		EOF
+		chmod +x "${stop_script}"
+		echo "To stop your jenkins session, please use the script ${stop_script}"
+	fi
+ 	if [ "${no_pull}" != "yes" ]; then
+		docker-compose pull
+ 	fi
+	docker stack "${cmd}" $(__concat_file_names swarm) "${args[@]}" $*
 }
 function __run_docker_compose(){
+	# Set default arguments
+	if [ -z "${cmd}" ]; then
+		cmd="up"
+		args+=( "-d" "--force" "--recreate")
+	fi
 	if [ "${cmd}" = "up" ]; then
 		# Create script to down session
 		cat > "${stop_script}" <<-EOF
@@ -118,7 +155,7 @@ function __run_docker_compose(){
 		$(env|grep -ve "LS_COLORS"|sed -e '/ /s/=\(.*\)/="\1"/')
 		set +a
 		set -e
-		${dc_cmd} down
+		docker-compose $(__concat_file_names compose) down
 		rm -f \${BASH_SOURCE[0]}
 		EOF
 		chmod +x "${stop_script}"
@@ -127,9 +164,9 @@ function __run_docker_compose(){
 			return
 		fi
 		if [ "${no_pull}" != "yes" ]; then
-			${dc_cmd} pull
+			docker-compose pull
 		fi
-		${dc_cmd} "${cmd}" "${args[@]}"
+		docker-compose $(__concat_file_names compose) "${cmd}" "${args[@]}"
 		if echo "${args[*]}"|grep -qwe '-d'; then
 			# This is not automatically put at the end as if we pass -d option to the up, it will give back the hand and do the down after it...
 			echo "To stop your jenkins session, please use the script ${stop_script}"
@@ -138,7 +175,7 @@ function __run_docker_compose(){
 			${stop_script}
 		fi
 	else
-		${dc_cmd} "${cmd}" "${args[@]}" $*
+		docker-compose $(__concat_file_names compose) "${cmd}" "${args[@]}" $*
 	fi
 }
 
@@ -154,44 +191,37 @@ trap cleanup EXIT
 tmp_args=
 while [ $# -ne 0 ]; do
 	case ${1} in
-		-h|-help|--help) usage; exit 0;;
+		-h|-help|--help|help) usage; exit 0;;
 		--debug) set -x;;
 		--clean-home-before) clean_home="yes";;
 		--automatic-preinstall) run_prehook="yes";;
 		--latest) export image_tag="latest";;
 		--no-pull) no_pull="yes";;
-		--*)
+		--compose|--swarm)
+			run_method="${1#--}"
+			;;
+		--network_override|--exposed)
 			if [ -r "docker-compose.${1#--}.yml" ]; then
 				filelist+=("docker-compose.${1#--}.yml")
-			else
-				tmp_args+=" ${1}"
 			fi
 			;;
-		-h|-help|--help|help) usage; exit 0;;
 		*) tmp_args+=" ${1}";;
 	esac
 	shift
 done
 
 set -- ${tmp_args}
-# Set default arguments if no command / args is provided
-if [ $# -eq 0 ]; then
-	set -- up -d --force-recreate
-fi
 
 # Command parsing
 while [ $# -ne 0 ]; do
 	case ${1} in
 		--) shift; break;;
-		-*) args+=( "${1}" );;
-		*) cmd=${1};;
+		up|deploy|down|rm)
+			cmd=${1}
+			;;
+		*) args+=( "${1}" );;
 	esac
 	shift
-done
-
-dc_cmd='docker-compose'
-for dfile in ${filelist[*]}; do
-	dc_cmd="${dc_cmd} --file ${dfile}"
 done
 
 ### Run automatic preinstallation
@@ -201,8 +231,9 @@ fi
 
 ### Clean home before to start anew
 if [ "${clean_home}" = "yes" ]; then
-	jenkins_home=$(${dc_cmd} config|grep -e 'JENKINS_HOME'|sed -e 's/.* //g')
+	jenkins_home=$(docker-compose $(__concat_file_names compose) config|grep -e 'JENKINS_HOME'|sed -e 's/.* //g')
 	rm -rf "${jenkins_home}" || true
 fi
-__run_docker_compose
+
+"__run_docker_${run_method}"
 # vim: set noexpandtab:
