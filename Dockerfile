@@ -19,7 +19,7 @@ ARG PIP_VERSION="21.2.4"
 RUN pip3 install -U pip==${PIP_VERSION}
 
 # Glibc install
-ARG glibc_version="2.34-r0"
+ARG glibc_version="2.35-r0"
 RUN curl -sSLo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
     && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-${glibc_version}.apk \
     && apk add glibc-${glibc_version}.apk && rm glibc-${glibc_version}.apk \
