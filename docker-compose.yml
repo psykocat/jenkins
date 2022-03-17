@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     image: ${DOCKER_REGISTRY}/jenkins:${VERSION}
     user: jenkins
+    networks:
+      - jenkinsnet
     env_file:
       - ${dockerconfig_root}/jenkins/jenkins.config.env
     environment:
@@ -32,6 +34,12 @@ services:
     image: busybox
     entrypoint: ["chown", "-R", "1000:1000", "${JENKINS_HOME}", "${JENKINS_HOME}/.ssh"]
     network_mode: "none"
+    restart: no
+    deploy:
+      restart_policy:
+        condition: none
     volumes:
       - ${JENKINS_HOME}:${JENKINS_HOME}
       #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
+networks:
+  jenkinsnet:
