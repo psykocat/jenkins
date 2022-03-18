@@ -2,16 +2,14 @@
 version: '3.8'
 services:
   jenkins:
-    restart: unless-stopped
-    image: ${DOCKER_REGISTRY}/jenkins:${VERSION}
-    user: jenkins
-    networks:
-      - jenkinsnet
+    restart: "unless-stopped"
+    image: "${DOCKER_REGISTRY}/jenkins:${VERSION}"
+    user: "jenkins"
     env_file:
-      - ${dockerconfig_root}/jenkins/jenkins.config.env
+      - "${dockerconfig_root}/jenkins/jenkins.config.env"
     environment:
-      JENKINS_HOME: ${JENKINS_HOME}
-      HOME: ${JENKINS_HOME}
+      JENKINS_HOME: "${JENKINS_HOME}"
+      HOME: "${JENKINS_HOME}"
     deploy:
       replicas: 1
       placement:
@@ -20,7 +18,7 @@ services:
         parallelism: 2
         delay: 10s
       restart_policy:
-        condition: on-failure
+        condition: "on-failure"
     logging:
       driver: "json-file"
       options:
@@ -29,17 +27,17 @@ services:
     volumes:
       #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
       # If you use the docker in the host these variables shall not be tinkered with
-      - ${JENKINS_HOME}:${JENKINS_HOME}
+      - "${JENKINS_HOME}:${JENKINS_HOME}"
   jenkins-data:
-    image: busybox
+    image: "busybox"
     entrypoint: ["chown", "-R", "1000:1000", "${JENKINS_HOME}", "${JENKINS_HOME}/.ssh"]
     network_mode: "none"
-    restart: no
+    restart: "no"
     deploy:
       restart_policy:
-        condition: none
+        condition: "none"
     volumes:
-      - ${JENKINS_HOME}:${JENKINS_HOME}
+      - "${JENKINS_HOME}:${JENKINS_HOME}"
       #- ${dockerconfig_root}/ssh:${JENKINS_HOME}/.ssh
 networks:
-  jenkinsnet:
+  default:
