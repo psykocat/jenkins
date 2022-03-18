@@ -46,10 +46,6 @@ while [ $# -ne 0 ]; do
 	shift;
 done
 
-if [ -n "${registry}" ]; then
-	echo "Logging to registry ${registry}"
-	docker login ${registry}
-fi
 jenkins_image=${registry:+${registry}/}jenkins
 
 echo "Retrieving templated jenkins"
