@@ -145,7 +145,7 @@ function __run_docker_compose(){
 	# Set default arguments
 	if [ -z "${cmd}" ]; then
 		cmd="up"
-		args+=( "-d" "--force" "--recreate")
+		args+=( "-d" "--force-recreate")
 	fi
 	if [ "${cmd}" = "up" ]; then
 		# Create script to down session
