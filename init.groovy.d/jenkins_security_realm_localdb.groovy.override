@@ -45,8 +45,7 @@ userList.each{ user ->
 
         // Generate a password
         def proc = 'openssl rand -base64 24'.execute()
-        proc.consumeProcessOutput(shellStdout, shellStderr)
-        proc.waitForOrKill(1000)
+        proc.waitForProcessOutput(shellStdout, shellStderr)
         def stdOut = shellStdout.toString().trim()
 
         // Update the account file
