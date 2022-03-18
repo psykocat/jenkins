@@ -129,6 +129,9 @@ function __run_docker_swarm(){
 		cat > "${stop_script}" <<-EOF
 		#!/usr/bin/env bash
 		docker stack rm ${COMPOSE_PROJECT_NAME}
+		while ! docker stack ps ${COMPOSE_PROJECT_NAME} &>/dev/null; do
+		    sleep 1
+		done
 		rm -f \${BASH_SOURCE[0]}
 		EOF
 		chmod +x "${stop_script}"
