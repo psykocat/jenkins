@@ -7,8 +7,8 @@ defaultGitDir = "/templates"
 def defaultJobName = "default"
 def jobName = System.getenv("_JOB_GENERATOR_NAME_") ?: defaultJobName
 def scmBase = System.getenv("_SCM_BASE_PATH_") ?: defaultGitDir
-def scmId = System.getenv("_JOB_GENERATOR_TYPE_") ?: "bitbucket"
-if (jobName == "") {
+def jobType = System.getenv("_JOB_GENERATOR_TYPE_") ?: "bitbucket"
+if (jobType == "disabled") {
     return
 }
 
@@ -88,5 +88,5 @@ if (jobName == defaultJobName){
 } else if (jobName == "disabled") {
     return true
 } else {
-    generateJobDsl(jobName, scmBase, scmId, false)
+    generateJobDsl(jobName, scmBase, jobType, false)
 }
