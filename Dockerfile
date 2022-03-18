@@ -19,12 +19,12 @@ ARG PIP_VERSION="21.2.4"
 RUN pip3 install -U pip==${PIP_VERSION}
 
 # Glibc install
-ARG glibc_version="2.35-r0"
-RUN curl -sSLo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-    && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-${glibc_version}.apk \
-    && apk add glibc-${glibc_version}.apk && rm glibc-${glibc_version}.apk \
-    && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-bin-${glibc_version}.apk \
-    && apk add glibc-bin-${glibc_version}.apk && rm glibc-bin-${glibc_version}.apk
+# ARG glibc_version="2.35-r0"
+# RUN curl -sSLo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+#     && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-${glibc_version}.apk \
+#     && apk add glibc-${glibc_version}.apk && rm glibc-${glibc_version}.apk \
+#     && curl -sSLO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${glibc_version}/glibc-bin-${glibc_version}.apk \
+#     && apk add glibc-bin-${glibc_version}.apk && rm glibc-bin-${glibc_version}.apk
 
 COPY download_and_install.sh /tmp/download_and_install.sh
 RUN chmod a+x /tmp/download_and_install.sh
