@@ -30,7 +30,7 @@ COPY download_and_install.sh /tmp/download_and_install.sh
 RUN chmod a+x /tmp/download_and_install.sh
 
 # Docker install (docker cli + docker-compose)
-ARG DOCKER_VERSION="20.10.8"
+ARG DOCKER_VERSION="20.10.12"
 ARG DOCKER_COMPOSE_VERSION="1.29.2"
 RUN /tmp/download_and_install.sh docker https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz 1 \
     && curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
