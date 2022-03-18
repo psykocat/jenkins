@@ -124,8 +124,6 @@ function __run_docker_swarm(){
 		cmd="deploy"
 		args+=( "--prune" "--with-registry-auth" "${COMPOSE_PROJECT_NAME}")
 	fi
-	echo "args : ${args[@]}"
-	echo "shell args : ${@}"
 	if [ "${cmd}" = "deploy" ]; then
 		# Create script to down session
 		cat > "${stop_script}" <<-EOF
