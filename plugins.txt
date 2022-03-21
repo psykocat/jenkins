@@ -3,6 +3,8 @@ blueocean
 build-name-setter
 build-pipeline-plugin
 build-timeout 
+build-token-root
+build-token-trigger
 build-user-vars-plugin
 credentials-binding 
 docker-commons
