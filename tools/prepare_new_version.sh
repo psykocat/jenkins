@@ -34,6 +34,7 @@ fi
 if [ ! -s ".env" ]; then
 	cp .env.tmpl .env
 fi
+# On MAC, -i shall have an extension provided to work as in Linux
 sed -i.prepareversionbackup -e '/VERSION/s/.*/VERSION='${docker_tag}'/' .env
 
 . .env
@@ -42,7 +43,6 @@ registry=${DOCKER_REGISTRY:-psykocat}
 image=${registry:+${registry}/}jenkins
 override_install_files=( "ref/jenkins.install.InstallUtil.lastExecVersion.override" "ref/jenkins.install.UpgradeWizard.state.override")
 VERSION="${VERSION:?"You must provide a jenkins version !"}"
-DOCKERFILE=${DOCKERFILE:?"You must provide a proper dockerfile name"}
 DOCKERFILE=${DOCKERFILE:?"You must provide a proper dockerfile name"}
 # On MAC, -i shall have an extension provided to work as in Linux
 sed -i.prepareversionbackup -e '/VERSION/s/.*/VERSION='${VERSION}'/' .env.tmpl
