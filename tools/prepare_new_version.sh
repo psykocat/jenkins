@@ -4,6 +4,7 @@ set -eu
 
 docker_tag=
 docker_tag_opt="--tag"
+do_commit="yes"
 while [ $# -ne 0 ]; do
 	case $1 in
 		--debug)
@@ -17,6 +18,9 @@ while [ $# -ne 0 ]; do
 			;;
 		--lts)
 			docker_tag_opt="--lts"
+			;;
+		--no-commit)
+			do_commit=""
 			;;
 		*) docker_tag="${1}";;
 	esac
@@ -49,5 +53,7 @@ for install_file in ${override_install_files[*]}; do
 	echo ${VERSION%-*} > "${install_file}"
 done
 rm -vf *.prepareversionbackup .*.prepareversionbackup
-git commit -m "Updating jenkins-base to version ${VERSION}" .env.tmpl "${DOCKERFILE}" "Dockerfile.tmpl" "${composefile}" ${override_install_files[@]}||true
+if [ "${do_commit}" = "yes" ]; then
+	git commit -m "Updating jenkins-base to version ${VERSION}" .env.tmpl "${DOCKERFILE}" "Dockerfile.tmpl" "${composefile}" ${override_install_files[@]}||true
+fi
 # vim: noexpandtab:

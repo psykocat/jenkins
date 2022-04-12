@@ -2,6 +2,7 @@
 
 set -eu
 
+do_commit="yes"
 while [ $# -ne 0 ]; do
 	case $1 in
 		--debug)
@@ -13,6 +14,9 @@ while [ $# -ne 0 ]; do
 			Update the list of plugins.txt with their associated versions
 			EOF
 			exit 0
+			;;
+		--no-commit)
+			do_commit=""
 			;;
 		*);;
 	esac
@@ -53,5 +57,7 @@ while read plugin; do
   echo "${newPlugin}" >> "${plugins_dest}"
 done < <(cat "${plugins_src}")
 
-git commit -m "Updating jenkins plugins" ${plugins_dest}||true
+if [ "${do_commit}" = "yes" ]; then
+	git commit -m "Updating jenkins plugins" ${plugins_dest}||true
+fi
 #END
