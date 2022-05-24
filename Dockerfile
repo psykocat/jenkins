@@ -1,5 +1,5 @@
 # You shall build this docker image through the script ./tools/build.sh
-FROM jenkins/jenkins:2.332.2-lts-alpine
+FROM jenkins/jenkins:2.332.3-lts-alpine
 
 LABEL maintainer="Psyko Cat"
 LABEL org.label-schema.name="psykocat/jenkins"
