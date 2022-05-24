@@ -6,6 +6,7 @@ build-timeout
 build-token-root
 build-token-trigger
 build-user-vars-plugin
+configuration-as-code
 credentials-binding 
 docker-commons
 embeddable-build-status
